@@ -2,42 +2,201 @@
 <html lang="zh-CN">
 <head>
     <meta charset="UTF-8">
-    <title>getVideoUrl 接口测试</title>
+    <title>91 视频真实地址获取</title>
     <style>
-        body { font-family: Arial, sans-serif; max-width: 800px; margin: 40px auto; }
-        label { display: block; margin-bottom: 8px; }
-        input[type="text"] { width: 100%; padding: 8px; box-sizing: border-box; }
-        button { margin-top: 12px; padding: 8px 16px; }
-        .result { margin-top: 20px; word-break: break-all; }
-        video { margin-top: 16px; max-width: 100%; }
-        pre { background: #f5f5f5; padding: 10px; white-space: pre-wrap; }
+        * { box-sizing: border-box; }
+        body {
+            margin: 0;
+            padding: 0;
+            font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, Arial, sans-serif;
+            background: linear-gradient(135deg, #111827, #1f2937);
+            color: #111827;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            min-height: 100vh;
+        }
+        .container {
+            width: 100%;
+            max-width: 720px;
+            padding: 24px;
+        }
+        .card {
+            background: #ffffff;
+            border-radius: 16px;
+            padding: 24px 24px 20px;
+            box-shadow: 0 20px 40px rgba(15, 23, 42, 0.35);
+        }
+        h1 {
+            margin: 0 0 8px;
+            font-size: 22px;
+            font-weight: 600;
+            color: #111827;
+        }
+        .subtitle {
+            margin: 0 0 20px;
+            font-size: 13px;
+            color: #6b7280;
+        }
+        label {
+            display: block;
+            margin-bottom: 6px;
+            font-size: 13px;
+            color: #374151;
+        }
+        input[type="text"] {
+            width: 100%;
+            padding: 10px 12px;
+            border-radius: 8px;
+            border: 1px solid #d1d5db;
+            font-size: 14px;
+            outline: none;
+            transition: border-color 0.15s ease, box-shadow 0.15s ease;
+        }
+        input[type="text"]:focus {
+            border-color: #2563eb;
+            box-shadow: 0 0 0 1px rgba(37, 99, 235, 0.25);
+        }
+        .actions {
+            margin-top: 14px;
+            display: flex;
+            gap: 10px;
+        }
+        button {
+            padding: 8px 16px;
+            border-radius: 999px;
+            border: none;
+            font-size: 14px;
+            cursor: pointer;
+            display: inline-flex;
+            align-items: center;
+            justify-content: center;
+            gap: 6px;
+            transition: transform 0.08s ease, box-shadow 0.12s ease, background-color 0.12s ease;
+        }
+        #btn {
+            background: #2563eb;
+            color: #ffffff;
+            box-shadow: 0 10px 18px rgba(37, 99, 235, 0.35);
+        }
+        #btn:hover {
+            background: #1d4ed8;
+            transform: translateY(-1px);
+            box-shadow: 0 12px 22px rgba(37, 99, 235, 0.4);
+        }
+        #btn:active {
+            transform: translateY(0);
+            box-shadow: 0 6px 14px rgba(37, 99, 235, 0.35);
+        }
+        #copyBtn {
+            background: #f3f4f6;
+            color: #374151;
+        }
+        #copyBtn:hover {
+            background: #e5e7eb;
+        }
+        .result-wrapper {
+            margin-top: 18px;
+            border-radius: 10px;
+            border: 1px solid #e5e7eb;
+            background: #f9fafb;
+            padding: 12px 12px 10px;
+        }
+        .result-header {
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+            margin-bottom: 6px;
+        }
+        .result-title {
+            font-size: 13px;
+            color: #6b7280;
+        }
+        .result-body {
+            font-size: 12px;
+            color: #111827;
+            word-break: break-all;
+        }
+        .msg {
+            margin-top: 6px;
+            font-size: 12px;
+            color: #6b7280;
+        }
+        .badge-success {
+            display: inline-flex;
+            align-items: center;
+            padding: 2px 8px;
+            border-radius: 999px;
+            font-size: 11px;
+            background: #dcfce7;
+            color: #166534;
+        }
+        .badge-error {
+            display: inline-flex;
+            align-items: center;
+            padding: 2px 8px;
+            border-radius: 999px;
+            font-size: 11px;
+            background: #fee2e2;
+            color: #b91c1c;
+        }
+        .video-url {
+            margin-top: 4px;
+            font-size: 12px;
+            color: #1f2937;
+            word-break: break-all;
+        }
+        .footer {
+            margin-top: 10px;
+            font-size: 11px;
+            color: #9ca3af;
+        }
     </style>
 </head>
 <body>
-<h1>getVideoUrl 接口测试页面</h1>
-<p>在下面输入 91 链接，点击“获取视频地址”测试后端接口。</p>
+<div class="container">
+    <div class="card">
+        <h1>91 视频真实地址获取</h1>
+        <p class="subtitle">在下方输入 91 视频链接，点击按钮后端会通过 Puppeteer 解析出真实 mp4 地址。</p>
 
-<label for="urlInput">91 链接：</label>
-<input id="urlInput" type="text" placeholder="例如：https://www.91porn.com/view_video.php?viewkey=xxxx">
-<button id="btn">获取视频地址</button>
+        <label for="urlInput">91 视频链接</label>
+        <input id="urlInput" type="text" placeholder="例如：https://www.91porn.com/view_video.php?viewkey=xxxx">
 
-<div class="result" id="result"></div>
-<video id="player" controls></video>
+        <div class="actions">
+            <button id="btn">获取视频地址</button>
+            <button id="copyBtn" type="button">复制视频地址</button>
+        </div>
+
+        <div class="result-wrapper">
+            <div class="result-header">
+                <span class="result-title">接口返回结果</span>
+                <span id="statusTag" class="badge-error" style="display:none;">未请求</span>
+            </div>
+            <div class="result-body" id="result">
+                <span class="msg">等待请求...</span>
+            </div>
+        </div>
+
+        <div class="footer">仅作技术调试示例，请勿用于任何违法用途。</div>
+    </div>
+</div>
 
 <script>
     document.getElementById('btn').addEventListener('click', async function () {
         const url = document.getElementById('urlInput').value.trim();
         const resultDiv = document.getElementById('result');
-        const player = document.getElementById('player');
-        resultDiv.textContent = '';
-        player.removeAttribute('src');
+        const statusTag = document.getElementById('statusTag');
+        resultDiv.innerHTML = '';
 
         if (!url) {
             alert('请先输入链接');
             return;
         }
 
-        resultDiv.textContent = '请求中...';
+        statusTag.style.display = 'inline-flex';
+        statusTag.className = 'badge-error';
+        statusTag.textContent = '请求中...';
+        resultDiv.innerHTML = '<span class="msg">正在请求后端接口，请稍候...</span>';
 
         try {
             const res = await fetch('/api/getVideoUrlByPuppeteer', {
@@ -49,14 +208,38 @@
             });
 
             const data = await res.json();
-            resultDiv.innerHTML = '<pre>' + JSON.stringify(data, null, 2) + '</pre>';
-
             if (data.success && data.videoUrl) {
-                player.src = data.videoUrl;
-                player.load();
+                statusTag.className = 'badge-success';
+                statusTag.textContent = '解析成功';
+                resultDiv.innerHTML = '<div class="video-url"><strong>视频地址：</strong>' + data.videoUrl + '</div>';
+            } else {
+                statusTag.className = 'badge-error';
+                statusTag.textContent = '解析失败';
+                resultDiv.innerHTML = '<span class="msg">解析失败，请检查链接或稍后重试。</span>';
             }
+
+            // 将视频地址缓存到按钮上，方便复制
+            const copyBtn = document.getElementById('copyBtn');
+            copyBtn.dataset.videoUrl = data.videoUrl || '';
         } catch (e) {
-            resultDiv.textContent = '请求异常: ' + e.message;
+            statusTag.className = 'badge-error';
+            statusTag.textContent = '请求异常';
+            resultDiv.innerHTML = '<span class="msg">请求异常：' + e.message + '</span>';
+        }
+    });
+
+    document.getElementById('copyBtn').addEventListener('click', async function () {
+        const videoUrl = this.dataset.videoUrl || '';
+        if (!videoUrl) {
+            alert('当前没有可复制的视频地址，请先完成一次成功解析。');
+            return;
+        }
+
+        try {
+            await navigator.clipboard.writeText(videoUrl);
+            alert('视频地址已复制到剪贴板');
+        } catch (e) {
+            alert('复制失败，请手动复制：\n' + videoUrl);
         }
     });
 </script>

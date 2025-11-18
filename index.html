@@ -1,0 +1,64 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+    <meta charset="UTF-8">
+    <title>getVideoUrl 接口测试</title>
+    <style>
+        body { font-family: Arial, sans-serif; max-width: 800px; margin: 40px auto; }
+        label { display: block; margin-bottom: 8px; }
+        input[type="text"] { width: 100%; padding: 8px; box-sizing: border-box; }
+        button { margin-top: 12px; padding: 8px 16px; }
+        .result { margin-top: 20px; word-break: break-all; }
+        video { margin-top: 16px; max-width: 100%; }
+        pre { background: #f5f5f5; padding: 10px; white-space: pre-wrap; }
+    </style>
+</head>
+<body>
+<h1>getVideoUrl 接口测试页面</h1>
+<p>在下面输入 91 链接，点击“获取视频地址”测试后端接口。</p>
+
+<label for="urlInput">91 链接：</label>
+<input id="urlInput" type="text" placeholder="例如：https://www.91porn.com/view_video.php?viewkey=xxxx">
+<button id="btn">获取视频地址</button>
+
+<div class="result" id="result"></div>
+<video id="player" controls></video>
+
+<script>
+    document.getElementById('btn').addEventListener('click', async function () {
+        const url = document.getElementById('urlInput').value.trim();
+        const resultDiv = document.getElementById('result');
+        const player = document.getElementById('player');
+        resultDiv.textContent = '';
+        player.removeAttribute('src');
+
+        if (!url) {
+            alert('请先输入链接');
+            return;
+        }
+
+        resultDiv.textContent = '请求中...';
+
+        try {
+            const res = await fetch('/api/getVideoUrlByPuppeteer', {
+                method: 'POST',
+                headers: {
+                    'Content-Type': 'application/json'
+                },
+                body: JSON.stringify({ url })
+            });
+
+            const data = await res.json();
+            resultDiv.innerHTML = '<pre>' + JSON.stringify(data, null, 2) + '</pre>';
+
+            if (data.success && data.videoUrl) {
+                player.src = data.videoUrl;
+                player.load();
+            }
+        } catch (e) {
+            resultDiv.textContent = '请求异常: ' + e.message;
+        }
+    });
+</script>
+</body>
+</html>

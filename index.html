@@ -357,6 +357,14 @@
                 </svg>
                 <span>复制地址</span>
             </button>
+            <button id="downloadBtn" type="button">
+                <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                    <path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"></path>
+                    <polyline points="7 10 12 15 17 10"></polyline>
+                    <line x1="12" y1="3" x2="12" y2="15"></line>
+                </svg>
+                <span>下载视频</span>
+            </button>
         </div>
 
         <div class="result-wrapper" id="resultWrapper">
@@ -395,6 +403,7 @@
 <script>
     const btn = document.getElementById('btn');
     const copyBtn = document.getElementById('copyBtn');
+    const downloadBtn = document.getElementById('downloadBtn');
     const urlInput = document.getElementById('urlInput');
     const resultDiv = document.getElementById('result');
     const statusTag = document.getElementById('statusTag');
@@ -419,6 +428,7 @@
         // Start loading state
         btn.disabled = true;
         copyBtn.disabled = true;
+        downloadBtn.disabled = true;
         btn.innerHTML = '<div class="spinner"></div><span>解析中...</span>';
         
         statusTag.style.display = 'inline-flex';
@@ -466,6 +476,12 @@
                 
                 resultWrapper.classList.add('has-result');
                 copyBtn.dataset.videoUrl = data.videoUrl;
+                downloadBtn.dataset.videoUrl = data.videoUrl;
+                if (data.pageTitle) {
+                    downloadBtn.dataset.title = data.pageTitle;
+                } else {
+                    delete downloadBtn.dataset.title;
+                }
                 showNotification('✨ 解析成功！', 'success');
             } else {
                 statusTag.className = 'badge badge-error';
@@ -502,6 +518,7 @@
             // Reset button state
             btn.disabled = false;
             copyBtn.disabled = false;
+            downloadBtn.disabled = false;
             btn.innerHTML = `
                 <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
                     <path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"></path>
@@ -545,6 +562,32 @@
         } catch (e) {
             showNotification('复制失败，请手动复制', 'error');
         }
+    });
+
+    // Download video：通过后端 /api/proxyDownload 代理，避免浏览器直接跨域请求导致 Failed to fetch
+    downloadBtn.addEventListener('click', function () {
+        const videoUrl = this.dataset.videoUrl || copyBtn.dataset.videoUrl || '';
+
+        if (!videoUrl) {
+            showNotification('当前没有可下载的视频地址，请先解析链接', 'error');
+            return;
+        }
+
+        // 优先使用接口返回的页面标题作为文件名
+        const titleFromApi = this.dataset.title || '';
+        let fileName;
+        if (titleFromApi) {
+            fileName = titleFromApi + '.mp4';
+        } else {
+            const urlPart = videoUrl.split('?')[0];
+            fileName = urlPart.split('/').pop() || 'video.mp4';
+        }
+
+        // 通过 window.location 访问同源后端的代理下载接口，避免浏览器直接跨域访问真实视频地址
+        const downloadUrl = `/api/proxyDownload?url=${encodeURIComponent(videoUrl)}&filename=${encodeURIComponent(fileName)}`;
+        window.location.href = downloadUrl;
+
+        showNotification('已发起下载请求，如浏览器有拦截请允许本站下载', 'success');
     });
 
     // Enter key support

@@ -1,5 +1,7 @@
 const express = require('express');
 const puppeteer = require('puppeteer');
+const http = require('http');
+const https = require('https');
 
 const app = express();
 app.use(express.json());
@@ -121,6 +123,52 @@ app.post('/api/getVideoUrlByPuppeteer', async (req, res) => {
     } catch (error) {
         console.error('Puppeteer 抓取失败：', error.message);
         return res.json({ error: "请求失败", details: error.message });
+    }
+});
+
+// 通过服务器代理真实视频地址，避免浏览器直接请求时跨域 / 防盗链导致的 Failed to fetch
+app.get('/api/proxyDownload', (req, res) => {
+    const targetUrl = req.query.url;
+    const filename = req.query.filename || 'video.mp4';
+
+    if (!targetUrl) {
+        return res.status(400).send('缺少参数 url');
+    }
+
+    try {
+        const client = targetUrl.startsWith('https') ? https : http;
+
+        const request = client.get(targetUrl, {
+            headers: {
+                // 尽量伪装成正常浏览器访问
+                'User-Agent': 'Mozilla/5.0 (Windows NT 10.0; Win64; x64; rv:130.0) Gecko/20100101 Firefox/130.0',
+                'Accept': '*/*',
+                'Accept-Language': 'zh-CN,zh;q=0.9,en;q=0.8',
+                'Connection': 'keep-alive',
+                'Referer': targetUrl
+            }
+        }, upstreamRes => {
+            if (upstreamRes.statusCode && upstreamRes.statusCode >= 400) {
+                res.status(upstreamRes.statusCode).send('上游请求失败: ' + upstreamRes.statusCode);
+                upstreamRes.resume();
+                return;
+            }
+
+            res.setHeader('Content-Type', upstreamRes.headers['content-type'] || 'application/octet-stream');
+            res.setHeader('Content-Disposition', `attachment; filename="${encodeURIComponent(filename)}"`);
+
+            upstreamRes.pipe(res);
+        });
+
+        request.on('error', (err) => {
+            console.error('proxyDownload error:', err.message);
+            if (!res.headersSent) {
+                res.status(500).send('下载失败: ' + err.message);
+            }
+        });
+    } catch (err) {
+        console.error('proxyDownload unexpected error:', err.message);
+        return res.status(500).send('下载失败: ' + err.message);
     }
 });
 

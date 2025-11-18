@@ -16,6 +16,19 @@ function extractEncodedString(html) {
 }
 
 /**
+ * 从 HTML 中提取 <title> 文本
+ */
+function extractTitle(html) {
+    const match = html.match(/<title[^>]*>([^<]*)<\/title>/i);
+    if (!match) return null;
+
+    let title = match[1].trim();
+    // 去掉站点统一附加的 "Chinese homemade video" 文案
+    title = title.replace(/\s*Chinese\s+homemade\s+video\s*/i, ' ').trim();
+    return title;
+}
+
+/**
  * 解码出真正的视频 <source> 标签
  */
 function decodeVideoSource(encodedStr) {
@@ -78,6 +91,9 @@ app.post('/api/getVideoUrlByPuppeteer', async (req, res) => {
         // 使用真实浏览器获取页面 HTML
         const html = await fetchHtmlWithPuppeteer(url);
 
+        // 提取页面标题（如果有）
+        const pageTitle = extractTitle(html);
+
         // 1. 提取 strencode2("xxxx")
         const encoded = extractEncodedString(html);
         if (!encoded) {
@@ -98,7 +114,8 @@ app.post('/api/getVideoUrlByPuppeteer', async (req, res) => {
 
         return res.json({
             success: true,
-            videoUrl: realUrl
+            videoUrl: realUrl,
+            pageTitle
         });
 
     } catch (error) {

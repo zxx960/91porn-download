@@ -452,6 +452,12 @@
                 statusTag.innerHTML = icons.success + '<span>解析成功</span>';
                 
                 resultDiv.innerHTML = `
+                    ${data.pageTitle ? `<div class="msg" style="margin-bottom: 8px;">
+                        <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                            <path d="M4 4h16v4H4zM4 10h10v4H4zM4 16h7v4H4z" />
+                        </svg>
+                        <span>页面标题：${data.pageTitle}</span>
+                    </div>` : ''}
                     <div class="video-url">
                         <strong>视频地址：</strong>
                         <br>${data.videoUrl}

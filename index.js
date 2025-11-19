@@ -73,7 +73,7 @@ async function fetchHtml(url) {
 /**
  * API：输入 91porn 链接 → 输出真实 mp4
  */
-app.post('/api/getVideoUrlByPuppeteer', async (req, res) => {
+app.post('/api/getVideoUrl', async (req, res) => {
     const { url } = req.body;
 
     if (!url) {

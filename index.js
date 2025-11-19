@@ -60,6 +60,9 @@ async function fetchHtml(url) {
             browsers: [{ name: 'chrome', minVersion: 110 }],
             devices: ['desktop'],
             locales: ['zh-CN', 'en-US']
+        },
+        headers: {
+            'Cookie': 'language=cn_CN'
         }
     });
     return body;

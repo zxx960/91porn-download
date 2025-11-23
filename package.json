@@ -15,8 +15,9 @@
   "author": "",
   "license": "ISC",
   "dependencies": {
-    "express": "^5.1.0",
-    "got-scraping": "^4.0.0"
+    "got-scraping": "^4.0.0",
+    "hono": "^4.6.0",
+    "@hono/node-server": "^1.13.0"
   },
   "devDependencies": {
     "nodemon": "^3.1.11"

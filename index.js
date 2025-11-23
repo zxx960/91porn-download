@@ -1,11 +1,15 @@
-const express = require('express');
-const http = require('http');
-const https = require('https');
+const { Hono } = require('hono');
+const { serve } = require('@hono/node-server');
+const fs = require('fs');
+const path = require('path');
 
-const app = express();
-app.use(express.json());
+const app = new Hono();
 // 静态资源托管当前目录，方便访问前端测试页面
-app.use(express.static(__dirname));
+app.get('/', (c) => {
+    const filePath = path.join(__dirname, 'index.html');
+    const html = fs.readFileSync(filePath, 'utf-8');
+    return c.html(html);
+});
 
 /**
  * 从 HTML 中提取 strencode2("%xx%xx...") 的内容
@@ -76,11 +80,12 @@ async function fetchHtml(url) {
 /**
  * API：输入 91porn 链接 → 输出真实 mp4
  */
-app.post('/api/getVideoUrl', async (req, res) => {
-    const { url } = req.body;
+app.post('/api/getVideoUrl', async (c) => {
+    const body = await c.req.json();
+    const { url } = body;
 
     if (!url) {
-        return res.status(400).json({ error: "缺少参数 url" });
+        return c.json({ error: "缺少参数 url" }, 400);
     }
 
     try {
@@ -93,22 +98,22 @@ app.post('/api/getVideoUrl', async (req, res) => {
         // 1. 提取 strencode2("xxxx")
         const encoded = extractEncodedString(html);
         if (!encoded) {
-            return res.json({ error: "未找到加密视频字符串" });
+            return c.json({ error: "未找到加密视频字符串" });
         }
 
         // 2. 解码成 <source> 标签
         const sourceHtml = decodeVideoSource(encoded);
         if (!sourceHtml) {
-            return res.json({ error: "解码失败" });
+            return c.json({ error: "解码失败" });
         }
 
         // 3. 提取 MP4 地址
         const realUrl = extractMp4Url(sourceHtml);
         if (!realUrl) {
-            return res.json({ error: "未找到视频 mp4 地址" });
+            return c.json({ error: "未找到视频 mp4 地址" });
         }
 
-        return res.json({
+        return c.json({
             success: true,
             videoUrl: realUrl,
             pageTitle
@@ -116,23 +121,21 @@ app.post('/api/getVideoUrl', async (req, res) => {
 
     } catch (error) {
         console.error('抓取失败：', error.message);
-        return res.json({ error: "请求失败", details: error.message });
+        return c.json({ error: "请求失败", details: error.message });
     }
 });
 
 // 通过服务器代理真实视频地址，避免浏览器直接请求时跨域 / 防盗链导致的 Failed to fetch
-app.get('/api/proxyDownload', (req, res) => {
-    const targetUrl = req.query.url;
-    const filename = req.query.filename || 'video.mp4';
+app.get('/api/proxyDownload', async (c) => {
+    const targetUrl = c.req.query('url');
+    const filename = c.req.query('filename') || 'video.mp4';
 
     if (!targetUrl) {
-        return res.status(400).send('缺少参数 url');
+        return c.text('缺少参数 url', 400);
     }
 
     try {
-        const client = targetUrl.startsWith('https') ? https : http;
-
-        const request = client.get(targetUrl, {
+        const upstreamRes = await fetch(targetUrl, {
             headers: {
                 // 尽量伪装成正常浏览器访问
                 'User-Agent': 'Mozilla/5.0 (Windows NT 10.0; Win64; x64; rv:130.0) Gecko/20100101 Firefox/130.0',
@@ -141,33 +144,33 @@ app.get('/api/proxyDownload', (req, res) => {
                 'Connection': 'keep-alive',
                 'Referer': targetUrl
             }
-        }, upstreamRes => {
-            if (upstreamRes.statusCode && upstreamRes.statusCode >= 400) {
-                res.status(upstreamRes.statusCode).send('上游请求失败: ' + upstreamRes.statusCode);
-                upstreamRes.resume();
-                return;
-            }
-
-            res.setHeader('Content-Type', upstreamRes.headers['content-type'] || 'application/octet-stream');
-            res.setHeader('Content-Disposition', `attachment; filename="${encodeURIComponent(filename)}"`);
-
-            upstreamRes.pipe(res);
         });
 
-        request.on('error', (err) => {
-            console.error('proxyDownload error:', err.message);
-            if (!res.headersSent) {
-                res.status(500).send('下载失败: ' + err.message);
-            }
+        if (!upstreamRes.ok) {
+            return c.text('上游请求失败: ' + upstreamRes.status, upstreamRes.status);
+        }
+
+        const headers = new Headers(upstreamRes.headers);
+        headers.set('Content-Type', upstreamRes.headers.get('content-type') || 'application/octet-stream');
+        headers.set('Content-Disposition', `attachment; filename="${encodeURIComponent(filename)}"`);
+
+        return new Response(upstreamRes.body, {
+            status: upstreamRes.status,
+            headers
         });
     } catch (err) {
-        console.error('proxyDownload unexpected error:', err.message);
-        return res.status(500).send('下载失败: ' + err.message);
+        console.error('proxyDownload error:', err.message);
+        return c.text('下载失败: ' + err.message, 500);
     }
 });
 
 // 启动服务
-const PORT = process.env.PORT || 3000;
-app.listen(PORT, () => {
-    console.log(`接口已启动：http://localhost:${PORT}`);
+const PORT = Number(process.env.PORT) || 3000;
+serve({
+    fetch: app.fetch,
+    port: PORT,
+    hostname: '0.0.0.0',
+    onListen: () => {
+        console.log(`接口已启动：http://localhost:${PORT}`);
+    }
 });

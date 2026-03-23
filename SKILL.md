@@ -1,6 +1,6 @@
 ---
 name: 91porn-download
-description: 维护和扩展 91porn-download 项目，一个基于 Node.js、Hono 的本地视频地址解析工具，包含浏览器页面和 Tampermonkey 用户脚本。适用于在此仓库中处理解析逻辑、API 行为、代理下载流程、本地 Web UI、Docker 打包，以及 `userscript/91_download_script.user.js` 中的 userscript 改动。
+description: 维护和扩展 91porn-download 项目，一个基于 Node.js、Hono 的本地视频地址解析工具，包含浏览器页面和 Tampermonkey 用户脚本。适用于在此仓库中处理解析逻辑、API 行为、代理下载流程、本地 Web UI，以及 `userscript/91_download_script.user.js` 中的 userscript 改动。
 ---
 
 # 91porn-download
@@ -17,7 +17,6 @@ description: 维护和扩展 91porn-download 项目，一个基于 Node.js、Hon
 - `index.js`：Hono 服务、HTML 页面托管、提取辅助函数、`/api/getVideoUrl` 和 `/api/proxyDownload`。
 - `index.html`：本地浏览器界面，用于输入页面链接并下载解析出的媒体地址。
 - `userscript/91_download_script.user.js`：Tampermonkey 脚本，在页面本地解析并通过 `GM_download` 下载。
-- `Dockerfile`：Node 服务的生产容器启动配置。
 - `README.md`：面向使用者的说明和当前功能摘要。
 
 ## 核心解析流程
@@ -80,7 +79,6 @@ description: 维护和扩展 91porn-download 项目，一个基于 Node.js、Hon
 - 运行 `npm start`，确认 Hono 服务可以正常启动。
 - 打开 `http://localhost:3000`，检查本地页面是否可访问。
 - 如果只是解析逻辑重构，确认 `index.js` 与 `userscript/91_download_script.user.js` 的正则和解码路径仍然一致。
-- 如果改动涉及打包，且本机可用 Docker，则运行 `docker build -t 91porn-download .`。
 
 如果验证需要真实页面样本，而用户没有提供可测试链接，要明确说明限制，不要臆测结果。
 

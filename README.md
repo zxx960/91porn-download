@@ -131,32 +131,11 @@ userscript/91_download_script.user.js
 - 通过服务端代理真实视频资源；
 - 尽量避免浏览器直接请求媒体地址时出现跨域或防盗链导致的下载失败。
 
-## Docker 运行
-
-构建镜像：
-
-```bash
-docker build -t 91porn-download .
-```
-
-启动容器：
-
-```bash
-docker run --rm -p 3000:3000 91porn-download
-```
-
-启动后访问：
-
-```text
-http://localhost:3000
-```
-
 ## 主要文件说明
 
 - `index.js`：后端服务与解析逻辑
 - `index.html`：本地网页界面
 - `userscript/91_download_script.user.js`：Tampermonkey 用户脚本
-- `Dockerfile`：Docker 镜像构建配置
 - `SKILL.md`：面向 Codex/Agent 的仓库工作说明
 
 ## 注意事项
